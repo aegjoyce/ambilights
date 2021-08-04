@@ -12,6 +12,9 @@ from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFO
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSWORD)
 from requests.auth import HTTPDigestAuth
 from requests.adapters import HTTPAdapter
+from datetime import timedelta
+
+SCAN_INTERVAL = timedelta(seconds=30)
 
 DEFAULT_DEVICE = 'default'
 DEFAULT_HOST = '127.0.0.1'
@@ -35,26 +38,31 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 # these are the names of the effects, change the names in the quotes to change the name displayed on the front-end
 EFFECT_MANUAL = "Manual"
-EFFECT_STANDARD = "Standard"
-EFFECT_NATURAL = "Natural"
-EFFECT_IMMERSIVE = "Football"
-EFFECT_VIVID = "Vivid"
-EFFECT_GAME = "Game"
-EFFECT_COMFORT = "Comfort"
-EFFECT_RELAX = "Relax"
-EFFECT_ADAP_BRIGHTNESS = "Lumina"
-EFFECT_ADAP_COLOR = "Colora"
-EFFECT_RETRO = "Retro"
-EFFECT_SPECTRUM = "Spectrum"
-EFFECT_SCANNER = "Scanner"
-EFFECT_RHYTHM = "Rhythm"
-EFFECT_RANDOM = "Party"
+EFFECT_FV_STANDARD = "Standard"
+EFFECT_FV_NATURAL = "Natural"
+EFFECT_FV_IMMERSIVE = "Football"
+EFFECT_FV_VIVID = "Vivid"
+EFFECT_FV_GAME = "Game"
+EFFECT_FV_COMFORT = "Comfort"
+EFFECT_FV_RELAX = "Relax"
+EFFECT_FA_ADAP_BRIGHTNESS = "Lumina"
+EFFECT_FA_ADAP_COLOR = "Colora"
+EFFECT_FA_RETRO = "Retro"
+EFFECT_FA_SPECTRUM = "Spectrum"
+EFFECT_FA_SCANNER = "Scanner"
+EFFECT_FA_RHYTHM = "Rhythm"
+EFFECT_FA_RANDOM = "Party"
+EFFECT_LL_HOT_LAVA = "Hot Lava"
+EFFECT_LL_DEEP_WATER = "Deep Water"
+EFFECT_LL_FRESH_NATURE = "Fresh Nature"
+EFFECT_LL_ISF = "Warm White"
+EFFECT_LL_CUSTOM_COLOR = "Custom Color"
 DEFAULT_EFFECT = EFFECT_MANUAL
-
 # this is the list of effects, you can safely remove any effects from the list below to remove them from the front-end
-AMBILIGHT_EFFECT_LIST = [EFFECT_MANUAL, EFFECT_STANDARD, EFFECT_NATURAL, EFFECT_IMMERSIVE, EFFECT_VIVID, 
-                        EFFECT_GAME, EFFECT_COMFORT, EFFECT_RELAX, EFFECT_ADAP_BRIGHTNESS, EFFECT_ADAP_COLOR,
-                        EFFECT_RETRO, EFFECT_SPECTRUM, EFFECT_SCANNER, EFFECT_RHYTHM, EFFECT_RANDOM]
+AMBILIGHT_EFFECT_LIST = [EFFECT_MANUAL, EFFECT_FV_STANDARD, EFFECT_FV_NATURAL, EFFECT_FV_IMMERSIVE, EFFECT_FV_VIVID, 
+                        EFFECT_FV_GAME, EFFECT_FV_COMFORT, EFFECT_FV_RELAX, EFFECT_FA_ADAP_BRIGHTNESS, EFFECT_FA_ADAP_COLOR,
+                        EFFECT_FA_RETRO, EFFECT_FA_SPECTRUM, EFFECT_FA_SCANNER, EFFECT_FA_RHYTHM, EFFECT_FA_RANDOM, 
+                        EFFECT_LL_HOT_LAVA, EFFECT_LL_DEEP_WATER, EFFECT_LL_FRESH_NATURE, EFFECT_LL_ISF, EFFECT_LL_CUSTOM_COLOR]
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
 	name = config.get(CONF_NAME)
@@ -136,9 +144,7 @@ class Ambilight(LightEntity):
             while convertedHue_old != convertedHue or convertedBrightness_old != convertedBrightness:
                 convertedHue_old = (convertedHue_old + hue_addorsubst) if convertedHue_old != convertedHue else convertedHue
                 convertedBrightness_old = (convertedBrightness_old + bright_addorsubst) if convertedBrightness_old != convertedBrightness else convertedBrightness
-                self._postReq('ambilight/currentconfiguration',{"styleName":"FOLLOW_COLOR","isExpert":True,"algorithm":"MANUAL_HUE",
-                "colorSettings":{"color":{"hue":convertedHue_old,"saturation":convertedSaturation,"brightness":convertedBrightness_old},
-                "colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255}} )
+                self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":convertedHue_old,"saturation":convertedSaturation,"brightness":convertedBrightness_old},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
             self.getState()
         elif ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
@@ -148,9 +154,7 @@ class Ambilight(LightEntity):
                 convertedBrightness = kwargs[ATTR_BRIGHTNESS]
             else:
                 convertedBrightness = self._brightness
-            self._postReq('ambilight/currentconfiguration',{"styleName":"FOLLOW_COLOR","isExpert":True,"algorithm":"MANUAL_HUE",
-            "colorSettings":{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},
-            "colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255}} )
+            self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
 
         elif ATTR_BRIGHTNESS in kwargs:
             # use this section instead if you cannot change the brightness without the bulb changing colour
@@ -160,9 +164,7 @@ class Ambilight(LightEntity):
             # and comment out all of the following
             
             convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            self._postReq('ambilight/currentconfiguration',{"styleName":"FOLLOW_COLOR","isExpert":True,"algorithm":"MANUAL_HUE",
-            "colorSettings":{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),
-            "brightness":convertedBrightness},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255}} )
+            self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
 
         elif ATTR_EFFECT in kwargs:
             effect = kwargs[ATTR_EFFECT]
@@ -170,9 +172,7 @@ class Ambilight(LightEntity):
 
         else:
             if OLD_STATE[3] == EFFECT_MANUAL:
-                self._postReq('ambilight/currentconfiguration',{"styleName":"FOLLOW_COLOR","isExpert":True,"algorithm":"MANUAL_HUE",
-                "colorSettings":{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),
-                "brightness":OLD_STATE[2]},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255}} )
+                self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
             else: 
                 effect = self._effect
                 self.set_effect(effect)
@@ -188,62 +188,80 @@ class Ambilight(LightEntity):
         if fullstate:
             self._available = True
             styleName = fullstate['styleName']
-            if styleName:
-                if styleName == 'FOLLOW_COLOR':
-                    isExpert = fullstate['isExpert']
-                    if isExpert == True:
-                        self._state = True
-                        colorSettings = fullstate['colorSettings']
-                        color = colorSettings['color']
-                        hue = color['hue']
-                        saturation = color['saturation']
-                        bright = color['brightness']
-                        self._hs = (hue*(360/255),saturation*(100/255))
-                        self._brightness = bright
-                        self._effect = EFFECT_MANUAL
-                    else:
-                        self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
-                        self._brightness = DEFAULT_BRIGHTNESS
+            
+            if styleName == "OFF":
+                self._state = False
 
-                elif styleName == 'FOLLOW_VIDEO':
-                    self._state = True
+            elif styleName == "Lounge light":
+                self._state = True
+                isExpert = fullstate['isExpert']
+                
+                if isExpert == False:
+                    effect = fullstate['menuSetting']
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
-                    effect = fullstate['menuSetting']
-                    if effect == "STANDARD":
-                        self._effect = EFFECT_STANDARD
-                    elif effect == "NATURAL":
-                        self._effect = EFFECT_NATURAL
-                    elif effect == "IMMERSIVE":
-                        self._effect = EFFECT_IMMERSIVE
-                    elif effect == "VIVID":
-                        self._effect = EFFECT_VIVID
-                    elif effect == "GAME":
-                        self._effect = EFFECT_GAME
-                    elif effect == "COMFORT":
-                        self._effect = EFFECT_COMFORT
-                    elif effect == "RELAX":
-                        self._effect = EFFECT_RELAX
-                    
-                elif styleName == 'FOLLOW_AUDIO':
-                    self._state = True
+                    if effect == "HOT_LAVA":
+                        self._effect = EFFECT_LL_HOT_LAVA
+                    elif effect == "DEEP_WATER":
+                        self._effect = EFFECT_LL_DEEP_WATER
+                    elif effect == "FRESH_NATURE":
+                        self._effect = EFFECT_LL_FRESH_NATURE
+                    elif effect == "ISF":
+                        self._effect = EFFECT_LL_ISF
+                    elif effect == "CUSTOM_COLOR":
+                        self._effect = EFFECT_LL_CUSTOM_COLOR
+
+                elif isExpert == True:
+                    hue = fullstate['colorSettings']['color']['hue']
+                    saturation = fullstate['colorSettings']['color']['saturation']
+                    bright = fullstate['colorSettings']['color']['brightness']
+                    self._hs = (hue*(360/255),saturation*(100/255))
+                    self._brightness = bright
+                    self._effect = EFFECT_MANUAL
+                
+                else:
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
-                    effect = fullstate['menuSetting']
-                    if effect == "VU_METER":
-                        self._effect = EFFECT_RETRO
-                    elif effect == "ENERGY_ADAPTIVE_BRIGHTNESS":
-                        self._effect = EFFECT_ADAP_BRIGHTNESS
-                    elif effect == "ENERGY_ADAPTIVE_COLORS":
-                        self._effect = EFFECT_ADAP_COLOR  
-                    elif effect == "SPECTUM_ANALYSER":
-                        self._effect = EFFECT_SPECTRUM
-                    elif effect == "KNIGHT_RIDER_ALTERNATING":
-                        self._effect = EFFECT_SCANNER
-                    elif effect == "RANDOM_PIXEL_FLASH":
-                        self._effect = EFFECT_RHYTHM
-                    elif effect == "MODE_RANDOM":
-                        self._effect = EFFECT_RANDOM
+
+            elif styleName == 'FOLLOW_VIDEO':
+                self._state = True
+                self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
+                self._brightness = DEFAULT_BRIGHTNESS
+                effect = fullstate['menuSetting']
+                if effect == "STANDARD":
+                    self._effect = EFFECT_FV_STANDARD
+                elif effect == "NATURAL":
+                    self._effect = EFFECT_FV_NATURAL
+                elif effect == "IMMERSIVE":
+                    self._effect = EFFECT_FV_IMMERSIVE
+                elif effect == "VIVID":
+                    self._effect = EFFECT_FV_VIVID
+                elif effect == "GAME":
+                    self._effect = EFFECT_FV_GAME
+                elif effect == "COMFORT":
+                    self._effect = EFFECT_FV_COMFORT
+                elif effect == "RELAX":
+                    self._effect = EFFECT_FV_RELAX
+                
+            elif styleName == 'FOLLOW_AUDIO':
+                self._state = True
+                self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
+                self._brightness = DEFAULT_BRIGHTNESS
+                effect = fullstate['menuSetting']
+                if effect == "VU_METER":
+                    self._effect = EFFECT_FA_RETRO
+                elif effect == "ENERGY_ADAPTIVE_BRIGHTNESS":
+                    self._effect = EFFECT_FA_ADAP_BRIGHTNESS
+                elif effect == "ENERGY_ADAPTIVE_COLORS":
+                    self._effect = EFFECT_FA_ADAP_COLOR  
+                elif effect == "SPECTUM_ANALYSER":
+                    self._effect = EFFECT_FA_SPECTRUM
+                elif effect == "KNIGHT_RIDER_ALTERNATING":
+                    self._effect = EFFECT_FA_SCANNER
+                elif effect == "RANDOM_PIXEL_FLASH":
+                    self._effect = EFFECT_FA_RHYTHM
+                elif effect == "MODE_RANDOM":
+                    self._effect = EFFECT_FA_RANDOM
 
         else:
             self._available = False
@@ -255,40 +273,59 @@ class Ambilight(LightEntity):
     def set_effect(self, effect):
         if effect:
             if effect == EFFECT_MANUAL:
-                self._postReq('ambilight/currentconfiguration',{"styleName":"FOLLOW_COLOR","isExpert":True,"algorithm":"MANUAL_HUE",
-                "colorSettings":{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),
-                "brightness":OLD_STATE[2]},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255}} )
+                self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
                 self._hs = (OLD_STATE[0], OLD_STATE[1])
                 self._brightness = OLD_STATE[2]
-            elif effect == EFFECT_STANDARD:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"STANDARD"})
-            elif effect == EFFECT_NATURAL:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
-            elif effect == EFFECT_IMMERSIVE:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"IMMERSIVE"})
-            elif effect == EFFECT_VIVID:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"VIVID"})
-            elif effect == EFFECT_GAME:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"GAME"})
-            elif effect == EFFECT_COMFORT:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"COMFORT"})
-            elif effect == EFFECT_RELAX:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"RELAX"})
-            elif effect == EFFECT_ADAP_BRIGHTNESS:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"ENERGY_ADAPTIVE_BRIGHTNESS"})
-            elif effect == EFFECT_ADAP_COLOR:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"ENERGY_ADAPTIVE_COLORS"})
-            elif effect == EFFECT_RETRO:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"VU_METER"})
-            elif effect == EFFECT_SPECTRUM:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"SPECTRUM_ANALYSER"})
-            elif effect == EFFECT_SCANNER:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"KNIGHT_RIDER_ALTERNATING"})
-            elif effect == EFFECT_RHYTHM:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"RANDOM_PIXEL_FLASH"})
-            elif effect == EFFECT_RANDOM:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"MODE_RANDOM"})
-
+            elif effect == EFFECT_FV_STANDARD:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"STANDARD"})
+            elif effect == EFFECT_FV_NATURAL:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"NATURAL"})
+            elif effect == EFFECT_FV_IMMERSIVE:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"IMMERSIVE"})
+            elif effect == EFFECT_FV_VIVID:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"VIVID"})
+            elif effect == EFFECT_FV_GAME:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"GAME"})
+            elif effect == EFFECT_FV_COMFORT:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"COMFORT"})
+            elif effect == EFFECT_FV_RELAX:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"RELAX"})
+            elif effect == EFFECT_FA_ADAP_BRIGHTNESS:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"ENERGY_ADAPTIVE_BRIGHTNESS"})
+            elif effect == EFFECT_FA_ADAP_COLOR:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"ENERGY_ADAPTIVE_COLORS"})
+            elif effect == EFFECT_FA_RETRO:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"VU_METER"})
+            elif effect == EFFECT_FA_SPECTRUM:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"SPECTRUM_ANALYSER"})
+            elif effect == EFFECT_FA_SCANNER:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"KNIGHT_RIDER_ALTERNATING"})
+            elif effect == EFFECT_FA_RHYTHM:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"RANDOM_PIXEL_FLASH"})
+            elif effect == EFFECT_FA_RANDOM:
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"MODE_RANDOM"})
+            elif effect == EFFECT_LL_HOT_LAVA:
+                self._postReq('ambilight/lounge', {"color":{"hue":8,"saturation":230,"brightness":180},"colordelta":{"hue":2,"saturation":16,"brightness":40},"speed":53,"mode":"Default"})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"HOT_LAVA","stringValue":"Hot Lava"})
+                self._effect = EFFECT_LL_HOT_LAVA
+            elif effect == EFFECT_LL_DEEP_WATER:
+                self._postReq('ambilight/lounge', {"color":{"hue":155,"saturation":240,"brightness":180},"colordelta":{"hue":6,"saturation":8,"brightness":33},"speed":45,"mode":"Default"})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"DEEP_WATER","stringValue":"Deep Water"})
+                self._effect = EFFECT_LL_DEEP_WATER
+            elif effect == EFFECT_LL_FRESH_NATURE:
+                self._postReq('ambilight/lounge', {"color":{"hue":80,"saturation":200,"brightness":180},"colordelta":{"hue":8,"saturation":50,"brightness":16},"speed":50,"mode":"Default"})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"FRESH_NATURE","stringValue":"Fresh Nature"})
+                self._effect = EFFECT_LL_FRESH_NATURE
+            elif effect == EFFECT_LL_ISF:
+                self._postReq('ambilight/lounge', {"color":{"hue":80,"saturation":200,"brightness":180},"colordelta":{"hue":8,"saturation":50,"brightness":16},"speed":50,"mode":"Default"})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"ISF","stringValue":"Warm White"})
+                self._effect = EFFECT_LL_ISF
+            elif effect == EFFECT_LL_CUSTOM_COLOR:
+                self._postReq('ambilight/lounge', {"color":{"hue":80,"saturation":200,"brightness":180},"colordelta":{"hue":8,"saturation":50,"brightness":16},"speed":50,"mode":"Default"})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"CUSTOM_COLOR","stringValue":"Custom Color"})
+                self._effect = EFFECT_LL_CUSTOM_COLOR
+        self.update()
+                
     def _getReq(self, path):
         try:
             if self._connfail:
