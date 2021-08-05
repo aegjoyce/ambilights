@@ -1,4 +1,5 @@
 ### Home Assistant Platform to integrate Phillip TVs' Ambilight as a light entity using the JointSpace API ###
+### 2021 rework by ajoyce ###
 
 
 import json
@@ -21,7 +22,7 @@ DEFAULT_HOST = '127.0.0.1'
 DEFAULT_USER = 'user'
 DEFAULT_PASS = 'pass'
 DEFAULT_NAME = 'TV Ambilights'
-BASE_URL = 'https://{0}:1926/6/{1}' # for older philps tv's, try changing this to 'http://{0}:1925/1/{1}'
+BASE_URL = 'https://{0}:1926/6/{1}' # for older Philips TVs, try changing this to 'http://{0}:1925/1/{1}'
 DEFAULT_HUE = 360
 DEFAULT_SATURATION = 0
 DEFAULT_BRIGHTNESS = 255
@@ -36,11 +37,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 	vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string
 })
 
-# these are the names of the effects, change the names in the quotes to change the name displayed on the front-end
+# Effect names. Some may not be accessible in your TV menu, but may still work via this integration
+
 EFFECT_MANUAL = "Manual"
 EFFECT_FV_STANDARD = "Standard"
 EFFECT_FV_NATURAL = "Natural"
-EFFECT_FV_IMMERSIVE = "Football"
+EFFECT_FV_IMMERSIVE = "Sports"
 EFFECT_FV_VIVID = "Vivid"
 EFFECT_FV_GAME = "Game"
 EFFECT_FV_COMFORT = "Comfort"
@@ -49,7 +51,8 @@ EFFECT_FA_ADAP_BRIGHTNESS = "Lumina"
 EFFECT_FA_ADAP_COLOR = "Colora"
 EFFECT_FA_RETRO = "Retro"
 EFFECT_FA_SPECTRUM = "Spectrum"
-EFFECT_FA_SCANNER = "Scanner"
+EFFECT_FA_SCANNER_CLOCKWISE = "Scanner (clockwise)"
+EFFECT_FA_SCANNER_ALTERNATING = "Scanner (alternating)"
 EFFECT_FA_RHYTHM = "Rhythm"
 EFFECT_FA_RANDOM = "Party"
 EFFECT_LL_HOT_LAVA = "Hot Lava"
@@ -58,10 +61,12 @@ EFFECT_LL_FRESH_NATURE = "Fresh Nature"
 EFFECT_LL_ISF = "Warm White"
 EFFECT_LL_CUSTOM_COLOR = "Custom Color"
 DEFAULT_EFFECT = EFFECT_MANUAL
-# this is the list of effects, you can safely remove any effects from the list below to remove them from the front-end
+
+# Effect name list. You can safely remove any effects from the list below to remove them from the frontend
+
 AMBILIGHT_EFFECT_LIST = [EFFECT_MANUAL, EFFECT_FV_STANDARD, EFFECT_FV_NATURAL, EFFECT_FV_IMMERSIVE, EFFECT_FV_VIVID, 
                         EFFECT_FV_GAME, EFFECT_FV_COMFORT, EFFECT_FV_RELAX, EFFECT_FA_ADAP_BRIGHTNESS, EFFECT_FA_ADAP_COLOR,
-                        EFFECT_FA_RETRO, EFFECT_FA_SPECTRUM, EFFECT_FA_SCANNER, EFFECT_FA_RHYTHM, EFFECT_FA_RANDOM, 
+                        EFFECT_FA_RETRO, EFFECT_FA_SPECTRUM, EFFECT_FA_SCANNER_CLOCKWISE, EFFECT_FA_SCANNER_ALTERNATING, EFFECT_FA_RHYTHM, EFFECT_FA_RANDOM, 
                         EFFECT_LL_HOT_LAVA, EFFECT_LL_DEEP_WATER, EFFECT_LL_FRESH_NATURE, EFFECT_LL_ISF, EFFECT_LL_CUSTOM_COLOR]
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -268,8 +273,10 @@ class Ambilight(LightEntity):
                     self._effect = EFFECT_FA_ADAP_COLOR  
                 elif effect == "SPECTUM_ANALYSER":
                     self._effect = EFFECT_FA_SPECTRUM
+                elif effect == "KNIGHT_RIDER_CLOCKWISE":
+                    self._effect = EFFECT_FA_SCANNER_CLOCKWISE
                 elif effect == "KNIGHT_RIDER_ALTERNATING":
-                    self._effect = EFFECT_FA_SCANNER
+                    self._effect = EFFECT_FA_SCANNER_ALTERNATING
                 elif effect == "RANDOM_PIXEL_FLASH":
                     self._effect = EFFECT_FA_RHYTHM
                 elif effect == "MODE_RANDOM":
@@ -289,53 +296,45 @@ class Ambilight(LightEntity):
                 self._hs = (OLD_STATE[0], OLD_STATE[1])
                 self._brightness = OLD_STATE[2]
             elif effect == EFFECT_FV_STANDARD:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"STANDARD"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":1}}}]})
             elif effect == EFFECT_FV_NATURAL:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"NATURAL"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":2}}}]})
             elif effect == EFFECT_FV_IMMERSIVE:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"IMMERSIVE"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":3}}}]})
             elif effect == EFFECT_FV_VIVID:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"VIVID"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":4}}}]})
             elif effect == EFFECT_FV_GAME:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"GAME"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":5}}}]})
             elif effect == EFFECT_FV_COMFORT:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"COMFORT"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":6}}}]})
             elif effect == EFFECT_FV_RELAX:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":"false","menuSetting":"RELAX"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":7}}}]})
             elif effect == EFFECT_FA_ADAP_BRIGHTNESS:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"ENERGY_ADAPTIVE_BRIGHTNESS"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":101}}}]})
             elif effect == EFFECT_FA_ADAP_COLOR:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"ENERGY_ADAPTIVE_COLORS"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":102}}}]})
             elif effect == EFFECT_FA_RETRO:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"VU_METER"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":103}}}]})
             elif effect == EFFECT_FA_SPECTRUM:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"SPECTRUM_ANALYSER"})
-            elif effect == EFFECT_FA_SCANNER:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"KNIGHT_RIDER_ALTERNATING"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":104}}}]})
+            elif effect == EFFECT_FA_SCANNER_CLOCKWISE:
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":105}}}]})
+            elif effect == EFFECT_FA_SCANNER_ALTERNATING:
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":106}}}]})
             elif effect == EFFECT_FA_RHYTHM:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"RANDOM_PIXEL_FLASH"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":107}}}]})
             elif effect == EFFECT_FA_RANDOM:
-                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":"false","menuSetting":"MODE_RANDOM"})
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":110}}}]})
             elif effect == EFFECT_LL_HOT_LAVA:
-                self._postReq('ambilight/lounge', {"color":{"hue":8,"saturation":230,"brightness":180},"colordelta":{"hue":2,"saturation":16,"brightness":40},"speed":53,"mode":"Default"})
-                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"HOT_LAVA","stringValue":"Hot Lava"})
-                self._effect = EFFECT_LL_HOT_LAVA
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":201}}}]})
             elif effect == EFFECT_LL_DEEP_WATER:
-                self._postReq('ambilight/lounge', {"color":{"hue":155,"saturation":240,"brightness":180},"colordelta":{"hue":6,"saturation":8,"brightness":33},"speed":45,"mode":"Default"})
-                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"DEEP_WATER","stringValue":"Deep Water"})
-                self._effect = EFFECT_LL_DEEP_WATER
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":202}}}]})
             elif effect == EFFECT_LL_FRESH_NATURE:
-                self._postReq('ambilight/lounge', {"color":{"hue":80,"saturation":200,"brightness":180},"colordelta":{"hue":8,"saturation":50,"brightness":16},"speed":50,"mode":"Default"})
-                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"FRESH_NATURE","stringValue":"Fresh Nature"})
-                self._effect = EFFECT_LL_FRESH_NATURE
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":203}}}]})
             elif effect == EFFECT_LL_ISF:
-                self._postReq('ambilight/lounge', {"color":{"hue":80,"saturation":200,"brightness":180},"colordelta":{"hue":8,"saturation":50,"brightness":16},"speed":50,"mode":"Default"})
-                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"ISF","stringValue":"Warm White"})
-                self._effect = EFFECT_LL_ISF
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":207}}}]})
             elif effect == EFFECT_LL_CUSTOM_COLOR:
-                self._postReq('ambilight/lounge', {"color":{"hue":80,"saturation":200,"brightness":180},"colordelta":{"hue":8,"saturation":50,"brightness":16},"speed":50,"mode":"Default"})
-                self._postReq('ambilight/currentconfiguration', {"styleName":"Lounge light","isExpert":"false","menuSetting":"CUSTOM_COLOR","stringValue":"Custom Color"})
-                self._effect = EFFECT_LL_CUSTOM_COLOR
+                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":208}}}]})
         self.update()
                 
     def _getReq(self, path):
