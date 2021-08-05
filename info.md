@@ -1,4 +1,4 @@
-# Philips TV Ambilight (Light) Component for Home Assistant
+# Philips TV Ambilight Component for Home Assistant
 
 An updated version of jomwells Ambilight component. I had been having issues with the official Home Assistant Philips TV JS integratation causing my TV to crash so have reverted to using ADB and jomwells' old integration.
 
