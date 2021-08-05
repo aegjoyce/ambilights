@@ -178,9 +178,21 @@ class Ambilight(LightEntity):
                 self.set_effect(effect)
 
     def turn_off(self, **kwargs):
-        global OLD_STATE
-        OLD_STATE = [self._hs[0], self._hs[1], self._brightness, self._effect]
-        self._postReq('ambilight/power', {'power':'Off'})
+        self.getState()
+        state = self._state
+        if state == True:
+            hs = self._hs
+            if hs == None:
+                self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
+            brightness = self._brightness
+            if brightness == None:
+                self._brightness = DEFAULT_BRIGHTNESS
+            effect = self._effect
+            if effect == None:
+                self._effect = DEFAULT_EFFECT
+            global OLD_STATE
+            OLD_STATE = [self._hs[0], self._hs[1], self._brightness, self._effect]
+            self._postReq('ambilight/power', {'power':'Off'})
         self._state = False
 		
     def getState(self):
