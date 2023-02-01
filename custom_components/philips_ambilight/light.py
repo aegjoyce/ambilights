@@ -18,7 +18,7 @@ from datetime import timedelta
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=5)
 
 DEFAULT_DEVICE = 'default'
 DEFAULT_HOST = '127.0.0.1'
