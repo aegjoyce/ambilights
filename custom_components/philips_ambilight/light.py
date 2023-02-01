@@ -149,7 +149,7 @@ class Ambilight(LightEntity):
             while convertedHue_old != convertedHue or convertedBrightness_old != convertedBrightness:
                 convertedHue_old = (convertedHue_old + hue_addorsubst) if convertedHue_old != convertedHue else convertedHue
                 convertedBrightness_old = (convertedBrightness_old + bright_addorsubst) if convertedBrightness_old != convertedBrightness else convertedBrightness
-                self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":convertedHue_old,"saturation":convertedSaturation,"brightness":convertedBrightness_old},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
+                self._postReq('ambilight/lounge',{"color":{"hue":convertedHue_old,"saturation":convertedSaturation,"brightness":convertedBrightness_old}} )
             self.getState()
         elif ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
@@ -159,7 +159,7 @@ class Ambilight(LightEntity):
                 convertedBrightness = kwargs[ATTR_BRIGHTNESS]
             else:
                 convertedBrightness = self._brightness
-            self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
+            self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness}} )
 
         elif ATTR_BRIGHTNESS in kwargs:
             # use this section instead if you cannot change the brightness without the bulb changing colour
@@ -169,7 +169,7 @@ class Ambilight(LightEntity):
             # and comment out all of the following
             
             convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
+            self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness}} )
 
         elif ATTR_EFFECT in kwargs:
             effect = kwargs[ATTR_EFFECT]
@@ -177,7 +177,7 @@ class Ambilight(LightEntity):
 
         else:
             if OLD_STATE[3] == EFFECT_MANUAL:
-                self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
+                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]}} )
             else: 
                 effect = self._effect
                 self.set_effect(effect)
@@ -292,39 +292,39 @@ class Ambilight(LightEntity):
     def set_effect(self, effect):
         if effect:
             if effect == EFFECT_MANUAL:
-                self._postReq('ambilight/currentconfiguration',{"styleName":"Lounge Light","isExpert":"true","colorSettings":{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colorDelta":{"hue":0,"saturation":0,"brightness":0},"speed":255,"algorithm":"MANUAL_HUE"}} )
+                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]}} )
                 self._hs = (OLD_STATE[0], OLD_STATE[1])
                 self._brightness = OLD_STATE[2]
             elif effect == EFFECT_FV_STANDARD:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":1}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"STANDARD"})
             elif effect == EFFECT_FV_NATURAL:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":2}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
             elif effect == EFFECT_FV_IMMERSIVE:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":3}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"IMMERSIVE"})
             elif effect == EFFECT_FV_VIVID:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":4}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"VIVID"})
             elif effect == EFFECT_FV_GAME:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":5}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"GAME"})
             elif effect == EFFECT_FV_COMFORT:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":6}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"COMFORT"})
             elif effect == EFFECT_FV_RELAX:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230768,"Controllable":"true","Available":"true","data":{"selected_item":7}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"RELAX"})
             elif effect == EFFECT_FA_ADAP_BRIGHTNESS:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":101}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"ENERGY_ADAPTIVE_BRIGHTNESS"})
             elif effect == EFFECT_FA_ADAP_COLOR:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":102}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"ENERGY_ADAPTIVE_COLORS"})
             elif effect == EFFECT_FA_RETRO:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":103}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"VU_METER"})
             elif effect == EFFECT_FA_SPECTRUM:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":104}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"SPECTRUM_ANALYSER"})
             elif effect == EFFECT_FA_SCANNER_CLOCKWISE:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":105}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"KNIGHT_RIDER_CLOCKWISE"})
             elif effect == EFFECT_FA_SCANNER_ALTERNATING:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":106}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"KNIGHT_RIDER_ALTERNATING"})
             elif effect == EFFECT_FA_RHYTHM:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":107}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"RANDOM_PIXEL_FLASH"})
             elif effect == EFFECT_FA_RANDOM:
-                self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230769,"Controllable":"true","Available":"true","data":{"selected_item":110}}}]})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_AUDIO","isExpert":False,"menuSetting":"MODE_RANDOM"})
             elif effect == EFFECT_LL_HOT_LAVA:
                 self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":201}}}]})
             elif effect == EFFECT_LL_DEEP_WATER:
