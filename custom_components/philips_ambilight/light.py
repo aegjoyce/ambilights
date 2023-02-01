@@ -30,7 +30,6 @@ DEFAULT_HUE = 360
 DEFAULT_SATURATION = 0
 DEFAULT_BRIGHTNESS = 255
 TIMEOUT = 5.0
-CONNFAILCOUNT = 5
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -89,7 +88,6 @@ class Ambilight(LightEntity):
         self._user = user
         self._password = password
         self._state = None
-        self._connfail = 0
         self._brightness = None
         self._hs = None
         self._available = False
@@ -341,37 +339,40 @@ class Ambilight(LightEntity):
         self.update()
                 
     def _getReq(self, path):
-        try:
-            if self._connfail:
-                self._connfail -= 1
-                return None
-            resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-            if resp.status_code == 200:
+        success = False
+        attempts = 0
+        while attempts < 3 and not success:
+            try:
+                resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 self.on = True
+                success = True
                 return json.loads(resp.text)
-            else:
-                _LOGGER.warning("GET error 1")
+            except requests.exceptions.HTTPError as err:
+                _LOGGER.warning("GET error: %s", err)
+                self.on = False
+                attempts += 1
                 return False
-        except requests.exceptions.RequestException as err:
-            _LOGGER.warning("GET error: %s", err)
-            self._connfail = CONNFAILCOUNT
-            self.on = False
-            return None
+            except requests.exceptions.RequestException as err:
+                _LOGGER.warning("GET error: %s", err)
+                self.on = False
+                attempts += 1
+                return False
 
     def _postReq(self, path, data):
-        try:
-            if self._connfail:
-                self._connfail -= 1
+        success = False
+        attempts = 0
+        while attempts < 3 and not success:
+            try:
+                resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+                self.on = True
+                success = True
+            except requests.exceptions.HTTPError as err:
+                _LOGGER.warning("GET error: %s", err)
+                self.on = False
+                attempts += 1
                 return False
-            resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-            self.on = True
-            if resp.status_code == 200:
-                return True
-            else:
-                _LOGGER.warning("POST error 1")
+            except requests.exceptions.RequestException as err:
+                _LOGGER.warning("GET error: %s", err)
+                self.on = False
+                attempts += 1
                 return False
-        except requests.exceptions.RequestException as err:
-            _LOGGER.warning("POST error: %s", err)
-            self._connfail = CONNFAILCOUNT
-            self.on = False
-            return False
