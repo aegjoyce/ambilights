@@ -350,9 +350,10 @@ class Ambilight(LightEntity):
                 self.on = True
                 return json.loads(resp.text)
             else:
-                _LOGGER.warning("GET error")
+                _LOGGER.warning("GET error 1")
                 return False
         except requests.exceptions.RequestException as err:
+            _LOGGER.warning("GET error 2")
             self._connfail = CONNFAILCOUNT
             self.on = False
             return None
@@ -367,9 +368,10 @@ class Ambilight(LightEntity):
             if resp.status_code == 200:
                 return True
             else:
-                _LOGGER.warning("POST error")
+                _LOGGER.warning("POST error 1")
                 return False
         except requests.exceptions.RequestException as err:
+            _LOGGER.warning("POST error 2")
             self._connfail = CONNFAILCOUNT
             self.on = False
             return False
