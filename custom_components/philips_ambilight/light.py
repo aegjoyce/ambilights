@@ -367,12 +367,12 @@ class Ambilight(LightEntity):
                 self.on = True
                 success = True
             except requests.exceptions.HTTPError as err:
-                _LOGGER.warning("GET error: %s", err)
+                _LOGGER.warning("POST error: %s", err)
                 self.on = False
                 attempts += 1
                 return False
             except requests.exceptions.RequestException as err:
-                _LOGGER.warning("GET error: %s", err)
+                _LOGGER.warning("POST error: %s", err)
                 self.on = False
                 attempts += 1
                 return False
