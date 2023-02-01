@@ -7,6 +7,7 @@ import string
 import requests
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+import logging
 
 from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, ATTR_TRANSITION,
                                             SUPPORT_BRIGHTNESS, SUPPORT_COLOR, SUPPORT_TRANSITION, ATTR_EFFECT, SUPPORT_EFFECT)
@@ -14,6 +15,8 @@ from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSW
 from requests.auth import HTTPDigestAuth
 from requests.adapters import HTTPAdapter
 from datetime import timedelta
+
+_LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -343,8 +346,12 @@ class Ambilight(LightEntity):
                 self._connfail -= 1
                 return None
             resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-            self.on = True
-            return json.loads(resp.text)
+            if resp.status_code == 200:
+                self.on = True
+                return json.loads(resp.text)
+            else:
+                _LOGGER.warning("GET error")
+                return False
         except requests.exceptions.RequestException as err:
             self._connfail = CONNFAILCOUNT
             self.on = False
@@ -360,6 +367,7 @@ class Ambilight(LightEntity):
             if resp.status_code == 200:
                 return True
             else:
+                _LOGGER.warning("POST error")
                 return False
         except requests.exceptions.RequestException as err:
             self._connfail = CONNFAILCOUNT
