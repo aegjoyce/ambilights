@@ -139,29 +139,29 @@ class Ambilight(LightEntity):
             convertedHue_old = int(self._hs[0]*(255/360))
             convertedSaturation_old = int(self._hs[1]*(255/100))
 
-            if ATTR_BRIGHTNESS in kwargs:
-                convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            else:
-                convertedBrightness = self._brightness
+            # if ATTR_BRIGHTNESS in kwargs:
+            #     convertedBrightness = kwargs[ATTR_BRIGHTNESS]
+            # else:
+            #     convertedBrightness = self._brightness
             
-            if ATTR_HS_COLOR in kwargs:
-                convertedHue = int(ATTR_HS_COLOR[0]*(255/360))
-                convertedSaturation = int(ATTR_HS_COLOR[1]*(255/100))
-            else:
-                convertedHue = int(self._hs[0]*(255/360))
-                convertedSaturation = int(self._hs[1]*(255/100))
+            # if ATTR_HS_COLOR in kwargs:
+            #     convertedHue = int(ATTR_HS_COLOR[0]*(255/360))
+            #     convertedSaturation = int(ATTR_HS_COLOR[1]*(255/100))
+            # else:
+            #     convertedHue = int(self._hs[0]*(255/360))
+            #     convertedSaturation = int(self._hs[1]*(255/100))
             
-            hue_addorsubst = 1 if (convertedHue_old < convertedHue) else -1
-            saturation_addorsubst = 1 if (convertedSaturation_old < convertedSaturation) else -1
-            brightness_addorsubst = 1 if (convertedBrightness_old < convertedBrightness) else -1
+            # hue_addorsubst = 1 if (convertedHue_old < convertedHue) else -1
+            # saturation_addorsubst = 1 if (convertedSaturation_old < convertedSaturation) else -1
+            # brightness_addorsubst = 1 if (convertedBrightness_old < convertedBrightness) else -1
 
-            # Now we start transition from old color/brightness to new color and brightness. Loop until match.
-            while convertedBrightness_old != convertedBrightness or convertedHue_old != convertedHue or convertedSaturation_old != convertedSaturation:
-                convertedBrightness_old = (convertedBrightness_old + brightness_addorsubst) if convertedBrightness_old != convertedBrightness else convertedBrightness
-                convertedHue_old = (convertedHue_old + hue_addorsubst) if convertedHue_old != convertedHue else convertedHue
-                convertedSaturation_old = (convertedSaturation_old + saturation_addorsubst) if convertedSaturation_old != convertedSaturation else convertedSaturation
-                self._postReq('ambilight/lounge',{"color":{"hue":convertedHue_old,"saturation":convertedSaturation_old,"brightness":convertedBrightness_old}} )
-            self.getState()
+            # # Now we start transition from old color/brightness to new color and brightness. Loop until match.
+            # while convertedBrightness_old != convertedBrightness or convertedHue_old != convertedHue or convertedSaturation_old != convertedSaturation:
+            #     convertedBrightness_old = (convertedBrightness_old + brightness_addorsubst) if convertedBrightness_old != convertedBrightness else convertedBrightness
+            #     convertedHue_old = (convertedHue_old + hue_addorsubst) if convertedHue_old != convertedHue else convertedHue
+            #     convertedSaturation_old = (convertedSaturation_old + saturation_addorsubst) if convertedSaturation_old != convertedSaturation else convertedSaturation
+            #     self._postReq('ambilight/lounge',{"color":{"hue":convertedHue_old,"saturation":convertedSaturation_old,"brightness":convertedBrightness_old}} )
+            # self.getState()
 
         elif ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
