@@ -9,8 +9,9 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 import logging
 
-from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, ATTR_TRANSITION,
-                                            SUPPORT_BRIGHTNESS, SUPPORT_COLOR, SUPPORT_TRANSITION, ATTR_EFFECT, SUPPORT_EFFECT)
+from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, ATTR_EFFECT,
+                                            #SUPPORT_TRANSITION, ATTR_TRANSITION,
+                                            SUPPORT_EFFECT)
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSWORD)
 from requests.auth import HTTPDigestAuth
 from requests.adapters import HTTPAdapter
@@ -133,11 +134,11 @@ class Ambilight(LightEntity):
         return True
 
     def turn_on(self, **kwargs):
-        if ATTR_TRANSITION in kwargs:
-            # Here we save current color and brightness
-            convertedBrightness_old = self._brightness
-            convertedHue_old = int(self._hs[0]*(255/360))
-            convertedSaturation_old = int(self._hs[1]*(255/100))
+        # if ATTR_TRANSITION in kwargs:
+        #     # Here we save current color and brightness
+        #     convertedBrightness_old = self._brightness
+        #     convertedHue_old = int(self._hs[0]*(255/360))
+        #     convertedSaturation_old = int(self._hs[1]*(255/100))
 
             # if ATTR_BRIGHTNESS in kwargs:
             #     convertedBrightness = kwargs[ATTR_BRIGHTNESS]
@@ -163,7 +164,7 @@ class Ambilight(LightEntity):
             #     self._postReq('ambilight/lounge',{"color":{"hue":convertedHue_old,"saturation":convertedSaturation_old,"brightness":convertedBrightness_old}} )
             # self.getState()
 
-        elif ATTR_HS_COLOR in kwargs:
+        if ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
             convertedHue = int(self._hs[0]*(255/360))
             convertedSaturation = int(self._hs[1]*(255/100))
@@ -174,12 +175,6 @@ class Ambilight(LightEntity):
             self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness}} )
 
         elif ATTR_BRIGHTNESS in kwargs:
-            # use this section instead if you cannot change the brightness without the bulb changing colour
-            # (brightness commands are limited to integer values 1:10)
-            #convertedBrightness = int(10*(kwargs[ATTR_BRIGHTNESS])/255)
-            #self._postReq('menuitems/settings/update', "values": [{"value": {"Nodeid": 2131230769, "Controllable": "true", "Available": "true", "string_id": "Brightness", "data": {"value": convertedBrightness}}}]} )
-            # and comment out all of the following
-            
             convertedBrightness = kwargs[ATTR_BRIGHTNESS]
             self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness}} )
 
@@ -370,6 +365,14 @@ class Ambilight(LightEntity):
                 return False
 
     def _postReq(self, path, data):
+        getMode = self._getReq('ambilight/mode')
+        mode = getMode['current']
+        if mode != 'expert':
+            _LOGGER.warning("Setting Ambilight mode to Expert")
+            modePath = 'ambilight/mode'
+            modeData = json.dumps({'current':'expert'})
+            setmode = self._session.post(BASE_URL.format(self._host, modePath), modeData, verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+
         success = False
         attempts = 0
         while attempts < 3 and not success:
