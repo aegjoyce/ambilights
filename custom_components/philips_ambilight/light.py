@@ -1,5 +1,3 @@
-### Home Assistant Platform to integrate Phillip TVs' Ambilight as a light entity using the JointSpace API ###
-### 2021 rework by ajoyce ###
 
 
 import json
@@ -9,9 +7,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 import logging
 
-from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, ATTR_EFFECT,
-                                            #SUPPORT_TRANSITION, ATTR_TRANSITION,
-                                            SUPPORT_EFFECT)
+from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, ATTR_EFFECT, SUPPORT_EFFECT)
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSWORD)
 from requests.auth import HTTPDigestAuth
 from requests.adapters import HTTPAdapter
@@ -19,28 +15,7 @@ from datetime import timedelta
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=5)
-
-DEFAULT_DEVICE = 'default'
-DEFAULT_HOST = '127.0.0.1'
-DEFAULT_USER = 'user'
-DEFAULT_PASS = 'pass'
-DEFAULT_NAME = 'TV Ambilights'
-BASE_URL = 'https://{0}:1926/6/{1}' # for older Philips TVs, try changing this to 'http://{0}:1925/1/{1}'
-DEFAULT_HUE = 360
-DEFAULT_SATURATION = 0
-DEFAULT_BRIGHTNESS = 255
-TIMEOUT = 5.0
-
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-	vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
-	vol.Required(CONF_USERNAME, default=DEFAULT_USER): cv.string,
-	vol.Required(CONF_PASSWORD, default=DEFAULT_PASS): cv.string,
-	vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string
-})
-
-# Effect names. Some may not be accessible in your TV menu, but may still work via this integration
+SCAN_INTERVAL = timedelta(seconds=10)
 
 EFFECT_MANUAL = "Manual"
 EFFECT_FV_STANDARD = "Standard"
@@ -63,14 +38,31 @@ EFFECT_LL_DEEP_WATER = "Deep Water"
 EFFECT_LL_FRESH_NATURE = "Fresh Nature"
 EFFECT_LL_ISF = "Warm White"
 EFFECT_LL_CUSTOM_COLOR = "Custom Color"
-DEFAULT_EFFECT = EFFECT_MANUAL
-
-# Effect name list. You can safely remove any effects from the list below to remove them from the frontend
 
 AMBILIGHT_EFFECT_LIST = [EFFECT_MANUAL, EFFECT_FV_STANDARD, EFFECT_FV_NATURAL, EFFECT_FV_IMMERSIVE, EFFECT_FV_VIVID, 
                         EFFECT_FV_GAME, EFFECT_FV_COMFORT, EFFECT_FV_RELAX, EFFECT_FA_ADAP_BRIGHTNESS, EFFECT_FA_ADAP_COLOR,
                         EFFECT_FA_RETRO, EFFECT_FA_SPECTRUM, EFFECT_FA_SCANNER_CLOCKWISE, EFFECT_FA_SCANNER_ALTERNATING, EFFECT_FA_RHYTHM, EFFECT_FA_RANDOM, 
                         EFFECT_LL_HOT_LAVA, EFFECT_LL_DEEP_WATER, EFFECT_LL_FRESH_NATURE, EFFECT_LL_ISF, EFFECT_LL_CUSTOM_COLOR]
+
+DEFAULT_DEVICE = 'default'
+DEFAULT_HOST = '127.0.0.1'
+DEFAULT_USER = 'user'
+DEFAULT_PASS = 'pass'
+DEFAULT_NAME = 'TV Ambilights'
+BASE_URL = 'https://{0}:1926/6/{1}'
+DEFAULT_HUE = 360
+DEFAULT_SATURATION = 0
+DEFAULT_BRIGHTNESS = 255
+DEFAULT_EFFECT = EFFECT_MANUAL
+TIMEOUT = 5.0
+OLD_STATE = [DEFAULT_HUE, DEFAULT_SATURATION, DEFAULT_BRIGHTNESS, DEFAULT_EFFECT]
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+	vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
+	vol.Required(CONF_USERNAME, default=DEFAULT_USER): cv.string,
+	vol.Required(CONF_PASSWORD, default=DEFAULT_PASS): cv.string,
+	vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string
+})
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
 	name = config.get(CONF_NAME)
@@ -78,8 +70,6 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 	user = config.get(CONF_USERNAME)
 	password = config.get(CONF_PASSWORD)
 	add_devices([Ambilight(name, host, user, password)])
-
-OLD_STATE = [DEFAULT_HUE, DEFAULT_SATURATION, DEFAULT_BRIGHTNESS, DEFAULT_EFFECT]
 
 class Ambilight(LightEntity):
 
@@ -134,36 +124,6 @@ class Ambilight(LightEntity):
         return True
 
     def turn_on(self, **kwargs):
-        # if ATTR_TRANSITION in kwargs:
-        #     # Here we save current color and brightness
-        #     convertedBrightness_old = self._brightness
-        #     convertedHue_old = int(self._hs[0]*(255/360))
-        #     convertedSaturation_old = int(self._hs[1]*(255/100))
-
-            # if ATTR_BRIGHTNESS in kwargs:
-            #     convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            # else:
-            #     convertedBrightness = self._brightness
-            
-            # if ATTR_HS_COLOR in kwargs:
-            #     convertedHue = int(ATTR_HS_COLOR[0]*(255/360))
-            #     convertedSaturation = int(ATTR_HS_COLOR[1]*(255/100))
-            # else:
-            #     convertedHue = int(self._hs[0]*(255/360))
-            #     convertedSaturation = int(self._hs[1]*(255/100))
-            
-            # hue_addorsubst = 1 if (convertedHue_old < convertedHue) else -1
-            # saturation_addorsubst = 1 if (convertedSaturation_old < convertedSaturation) else -1
-            # brightness_addorsubst = 1 if (convertedBrightness_old < convertedBrightness) else -1
-
-            # # Now we start transition from old color/brightness to new color and brightness. Loop until match.
-            # while convertedBrightness_old != convertedBrightness or convertedHue_old != convertedHue or convertedSaturation_old != convertedSaturation:
-            #     convertedBrightness_old = (convertedBrightness_old + brightness_addorsubst) if convertedBrightness_old != convertedBrightness else convertedBrightness
-            #     convertedHue_old = (convertedHue_old + hue_addorsubst) if convertedHue_old != convertedHue else convertedHue
-            #     convertedSaturation_old = (convertedSaturation_old + saturation_addorsubst) if convertedSaturation_old != convertedSaturation else convertedSaturation
-            #     self._postReq('ambilight/lounge',{"color":{"hue":convertedHue_old,"saturation":convertedSaturation_old,"brightness":convertedBrightness_old}} )
-            # self.getState()
-
         if ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
             convertedHue = int(self._hs[0]*(255/360))
@@ -172,11 +132,11 @@ class Ambilight(LightEntity):
                 convertedBrightness = kwargs[ATTR_BRIGHTNESS]
             else:
                 convertedBrightness = self._brightness
-            self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness}} )
+            self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
 
         elif ATTR_BRIGHTNESS in kwargs:
             convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness}} )
+            self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
 
         elif ATTR_EFFECT in kwargs:
             effect = kwargs[ATTR_EFFECT]
@@ -184,7 +144,7 @@ class Ambilight(LightEntity):
 
         else:
             if OLD_STATE[3] == EFFECT_MANUAL:
-                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]}} )
+                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
             else: 
                 effect = self._effect
                 self.set_effect(effect)
@@ -208,37 +168,37 @@ class Ambilight(LightEntity):
         self._state = False
 		
     def getState(self):
-        fullstate = self._getReq('ambilight/currentconfiguration')
-        if fullstate:
+        fullState = self._getReq('ambilight/currentconfiguration')
+        if fullState:
             self._available = True
-            styleName = fullstate['styleName']
+            styleName = fullState['styleName']
             
             if styleName == "OFF":
                 self._state = False
 
             elif styleName == "Lounge light":
                 self._state = True
-                isExpert = fullstate['isExpert']
+                isExpert = fullState['isExpert']
                 
                 if isExpert == False:
-                    effect = fullstate['menuSetting']
+                    effectName = fullState['menuSetting']
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
-                    if effect == "HOT_LAVA":
+                    if effectName == "HOT_LAVA":
                         self._effect = EFFECT_LL_HOT_LAVA
-                    elif effect == "DEEP_WATER":
+                    elif effectName == "DEEP_WATER":
                         self._effect = EFFECT_LL_DEEP_WATER
-                    elif effect == "FRESH_NATURE":
+                    elif effectName == "FRESH_NATURE":
                         self._effect = EFFECT_LL_FRESH_NATURE
-                    elif effect == "ISF":
+                    elif effectName == "ISF":
                         self._effect = EFFECT_LL_ISF
-                    elif effect == "CUSTOM_COLOR":
+                    elif effectName == "CUSTOM_COLOR":
                         self._effect = EFFECT_LL_CUSTOM_COLOR
 
                 elif isExpert == True:
-                    hue = fullstate['colorSettings']['color']['hue']
-                    saturation = fullstate['colorSettings']['color']['saturation']
-                    bright = fullstate['colorSettings']['color']['brightness']
+                    hue = fullState['colorSettings']['color']['hue']
+                    saturation = fullState['colorSettings']['color']['saturation']
+                    bright = fullState['colorSettings']['color']['brightness']
                     self._hs = (hue*(360/255),saturation*(100/255))
                     self._brightness = bright
                     self._effect = EFFECT_MANUAL
@@ -251,42 +211,42 @@ class Ambilight(LightEntity):
                 self._state = True
                 self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                 self._brightness = DEFAULT_BRIGHTNESS
-                effect = fullstate['menuSetting']
-                if effect == "STANDARD":
+                effectName = fullState['menuSetting']
+                if effectName == "STANDARD":
                     self._effect = EFFECT_FV_STANDARD
-                elif effect == "NATURAL":
+                elif effectName == "NATURAL":
                     self._effect = EFFECT_FV_NATURAL
-                elif effect == "IMMERSIVE":
+                elif effectName == "IMMERSIVE":
                     self._effect = EFFECT_FV_IMMERSIVE
-                elif effect == "VIVID":
+                elif effectName == "VIVID":
                     self._effect = EFFECT_FV_VIVID
-                elif effect == "GAME":
+                elif effectName == "GAME":
                     self._effect = EFFECT_FV_GAME
-                elif effect == "COMFORT":
+                elif effectName == "COMFORT":
                     self._effect = EFFECT_FV_COMFORT
-                elif effect == "RELAX":
+                elif effectName == "RELAX":
                     self._effect = EFFECT_FV_RELAX
                 
             elif styleName == 'FOLLOW_AUDIO':
                 self._state = True
                 self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                 self._brightness = DEFAULT_BRIGHTNESS
-                effect = fullstate['menuSetting']
-                if effect == "VU_METER":
+                effectName = fullState['menuSetting']
+                if effectName == "VU_METER":
                     self._effect = EFFECT_FA_RETRO
-                elif effect == "ENERGY_ADAPTIVE_BRIGHTNESS":
+                elif effectName == "ENERGY_ADAPTIVE_BRIGHTNESS":
                     self._effect = EFFECT_FA_ADAP_BRIGHTNESS
-                elif effect == "ENERGY_ADAPTIVE_COLORS":
+                elif effectName == "ENERGY_ADAPTIVE_COLORS":
                     self._effect = EFFECT_FA_ADAP_COLOR  
-                elif effect == "SPECTUM_ANALYSER":
+                elif effectName == "SPECTUM_ANALYSER":
                     self._effect = EFFECT_FA_SPECTRUM
-                elif effect == "KNIGHT_RIDER_CLOCKWISE":
+                elif effectName == "KNIGHT_RIDER_CLOCKWISE":
                     self._effect = EFFECT_FA_SCANNER_CLOCKWISE
-                elif effect == "KNIGHT_RIDER_ALTERNATING":
+                elif effectName == "KNIGHT_RIDER_ALTERNATING":
                     self._effect = EFFECT_FA_SCANNER_ALTERNATING
-                elif effect == "RANDOM_PIXEL_FLASH":
+                elif effectName == "RANDOM_PIXEL_FLASH":
                     self._effect = EFFECT_FA_RHYTHM
-                elif effect == "MODE_RANDOM":
+                elif effectName == "MODE_RANDOM":
                     self._effect = EFFECT_FA_RANDOM
 
         else:
@@ -299,7 +259,7 @@ class Ambilight(LightEntity):
     def set_effect(self, effect):
         if effect:
             if effect == EFFECT_MANUAL:
-                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]}} )
+                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
                 self._hs = (OLD_STATE[0], OLD_STATE[1])
                 self._brightness = OLD_STATE[2]
             elif effect == EFFECT_FV_STANDARD:
@@ -342,7 +302,7 @@ class Ambilight(LightEntity):
                 self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":207}}}]})
             elif effect == EFFECT_LL_CUSTOM_COLOR:
                 self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":208}}}]})
-        self.update()
+        self._effect = effect
                 
     def _getReq(self, path):
         success = False
@@ -353,26 +313,13 @@ class Ambilight(LightEntity):
                 self.on = True
                 success = True
                 return json.loads(resp.text)
-            except requests.exceptions.HTTPError as err:
-                _LOGGER.warning("GET error: %s", err)
-                self.on = False
+            except Exception as err:
                 attempts += 1
-                return False
-            except requests.exceptions.RequestException as err:
-                _LOGGER.warning("GET error: %s", err)
+                _LOGGER.warning("GET error, attempt %s: %s" % (str(attempts), str(err)))
                 self.on = False
-                attempts += 1
                 return False
 
     def _postReq(self, path, data):
-        getMode = self._getReq('ambilight/mode')
-        mode = getMode['current']
-        if mode != 'expert':
-            _LOGGER.warning("Setting Ambilight mode to Expert")
-            modePath = 'ambilight/mode'
-            modeData = json.dumps({'current':'expert'})
-            setmode = self._session.post(BASE_URL.format(self._host, modePath), modeData, verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-
         success = False
         attempts = 0
         while attempts < 3 and not success:
@@ -380,13 +327,10 @@ class Ambilight(LightEntity):
                 resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 self.on = True
                 success = True
-            except requests.exceptions.HTTPError as err:
-                _LOGGER.warning("POST error: %s", err)
-                self.on = False
+                return True
+            except Exception as err:
                 attempts += 1
-                return False
-            except requests.exceptions.RequestException as err:
-                _LOGGER.warning("POST error: %s", err)
+                _LOGGER.warning("POST error, attempt %s: %s" % (str(attempts), str(err)))
                 self.on = False
-                attempts += 1
                 return False
+        
