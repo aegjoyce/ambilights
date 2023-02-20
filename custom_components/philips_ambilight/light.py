@@ -6,6 +6,7 @@ import requests
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 import logging
+import time
 
 from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, ATTR_EFFECT, SUPPORT_EFFECT)
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSWORD)
@@ -139,6 +140,10 @@ class Ambilight(LightEntity):
             self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
 
         elif ATTR_EFFECT in kwargs:
+            effect = self._effect
+            if effect == EFFECT_MANUAL:
+                self._postReq('ambilight/power', {'power':'Off'})
+                time.sleep(0.1)
             effect = kwargs[ATTR_EFFECT]
             self.set_effect(effect)
 
@@ -150,7 +155,7 @@ class Ambilight(LightEntity):
                 self.set_effect(effect)
 
     def turn_off(self, **kwargs):
-        self.getState()
+        # self.getState()
         state = self._state
         if state == True:
             hs = self._hs
@@ -164,7 +169,7 @@ class Ambilight(LightEntity):
                 self._effect = DEFAULT_EFFECT
             global OLD_STATE
             OLD_STATE = [self._hs[0], self._hs[1], self._brightness, self._effect]
-            self._postReq('ambilight/power', {'power':'Off'})
+        self._postReq('ambilight/power', {'power':'Off'})
         self._state = False
 		
     def getState(self):
