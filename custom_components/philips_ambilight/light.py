@@ -125,6 +125,8 @@ class Ambilight(LightEntity):
         return True
 
     def turn_on(self, **kwargs):
+        self._postReq('ambilight/power', {'power':'On'})
+        time.sleep(0.1)
         if ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
             convertedHue = int(self._hs[0]*(255/360))
