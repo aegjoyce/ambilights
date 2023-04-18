@@ -129,7 +129,7 @@ class Ambilight(LightEntity):
             state = self._state
             if state == False:
                 self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
-                time.sleep(0.1)
+                time.sleep(0.2)
             self._hs = kwargs[ATTR_HS_COLOR]
             convertedHue = int(self._hs[0]*(255/360))
             convertedSaturation = int(self._hs[1]*(255/100))
@@ -137,15 +137,15 @@ class Ambilight(LightEntity):
                 convertedBrightness = kwargs[ATTR_BRIGHTNESS]
             else:
                 convertedBrightness = self._brightness
-            self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
+            self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
 
         elif ATTR_BRIGHTNESS in kwargs:
             state = self._state
             if state == False:
                 self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
-                time.sleep(0.1)
+                time.sleep(0.2)
             convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
+            self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
 
         elif ATTR_EFFECT in kwargs:
             effect = self._effect
@@ -153,10 +153,10 @@ class Ambilight(LightEntity):
                 state = self._state
                 if state == False:
                     self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
-                    time.sleep(0.1)
+                    time.sleep(0.2)
                 else:
                     self._postReq('ambilight/power', {'power':'Off'})
-                    time.sleep(0.1)
+                    time.sleep(0.2)
             effect = kwargs[ATTR_EFFECT]
             self.set_effect(effect)
 
@@ -165,8 +165,8 @@ class Ambilight(LightEntity):
                 state = self._state
                 if state == False:
                     self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
-                    time.sleep(0.1)
-                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
+                    time.sleep(0.2)
+                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
             else: 
                 effect = self._effect
                 self.set_effect(effect)
@@ -280,7 +280,7 @@ class Ambilight(LightEntity):
     def set_effect(self, effect):
         if effect:
             if effect == EFFECT_MANUAL:
-                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0,"mode":"Default"} )
+                self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
                 self._hs = (OLD_STATE[0], OLD_STATE[1])
                 self._brightness = OLD_STATE[2]
             elif effect == EFFECT_FV_STANDARD:
@@ -325,33 +325,52 @@ class Ambilight(LightEntity):
                 self._postReq('menuitems/settings/update', {"values":[{"value":{"Nodeid":2131230770,"Controllable":"true","Available":"true","data":{"selected_item":208}}}]})
         self._effect = effect
                 
-    def _getReq(self, path):
-        success = False
-        attempts = 0
-        while attempts < 3 and not success:
-            try:
-                resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-                self.on = True
-                success = True
-                return json.loads(resp.text)
-            except Exception as err:
-                attempts += 1
-                _LOGGER.warning("GET error, attempt %s: %s" % (str(attempts), str(err)))
-                self.on = False
-                return False
+    # def _getReq(self, path):
+    #     success = False
+    #     attempts = 0
+    #     while attempts < 3 and not success:
+    #         try:
+    #             resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+    #             self.on = True
+    #             success = True
+    #             return json.loads(resp.text)
+    #         except Exception as err:
+    #             attempts += 1
+    #             _LOGGER.warning("GET error, attempt %s: %s" % (str(attempts), str(err)))
+    #             self.on = False
+    #             return False
 
-    def _postReq(self, path, data):
-        success = False
-        attempts = 0
-        while attempts < 3 and not success:
-            try:
-                resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-                self.on = True
-                success = True
-                return True
-            except Exception as err:
-                attempts += 1
-                _LOGGER.warning("POST error, attempt %s: %s" % (str(attempts), str(err)))
-                self.on = False
-                return False
+    def _getReq(self, path):
+        resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+        if resp:
+            self.on = True
+            return json.loads(resp.text)
+        else:
+            _LOGGER.warning("GET error")
+            self.on = False
+            return False
+
+    # def _postReq(self, path, data):
+    #     success = False
+    #     attempts = 0
+    #     while attempts < 3 and not success:
+    #         try:
+    #             resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+    #             self.on = True
+    #             success = True
+    #             return True
+    #         except Exception as err:
+    #             attempts += 1
+    #             _LOGGER.warning("POST error, attempt %s: %s" % (str(attempts), str(err)))
+    #             self.on = False
+    #             return False
         
+    def _postReq(self, path, data):
+        resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+        if resp:
+            self.on = True
+            return True
+        else:
+            _LOGGER.warning("POST error")
+            self.on = False
+            return False
