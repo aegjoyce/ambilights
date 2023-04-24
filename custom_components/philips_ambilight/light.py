@@ -55,7 +55,7 @@ DEFAULT_HUE = 360
 DEFAULT_SATURATION = 0
 DEFAULT_BRIGHTNESS = 255
 DEFAULT_EFFECT = EFFECT_MANUAL
-TIMEOUT = 1.0
+TIMEOUT = 0.5
 OLD_STATE = [DEFAULT_HUE, DEFAULT_SATURATION, DEFAULT_BRIGHTNESS, DEFAULT_EFFECT]
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -128,7 +128,7 @@ class Ambilight(LightEntity):
         if ATTR_HS_COLOR in kwargs:
             state = self._state
             if state == False:
-                self._postReq('ambilight/power', {'power':'On'})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
                 time.sleep(0.2)
             self._hs = kwargs[ATTR_HS_COLOR]
             convertedHue = int(self._hs[0]*(255/360))
@@ -142,7 +142,7 @@ class Ambilight(LightEntity):
         elif ATTR_BRIGHTNESS in kwargs:
             state = self._state
             if state == False:
-                self._postReq('ambilight/power', {'power':'On'})
+                self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
                 time.sleep(0.2)
             convertedBrightness = kwargs[ATTR_BRIGHTNESS]
             self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
@@ -152,7 +152,7 @@ class Ambilight(LightEntity):
             if effect == EFFECT_MANUAL:
                 state = self._state
                 if state == False:
-                    self._postReq('ambilight/power', {'power':'On'})
+                    self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
                     time.sleep(0.2)
                 else:
                     self._postReq('ambilight/power', {'power':'Off'})
@@ -164,7 +164,7 @@ class Ambilight(LightEntity):
             if OLD_STATE[3] == EFFECT_MANUAL:
                 state = self._state
                 if state == False:
-                    self._postReq('ambilight/power', {'power':'On'})
+                    self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
                     time.sleep(0.2)
                 self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
             else: 
