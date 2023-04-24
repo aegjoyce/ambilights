@@ -84,8 +84,8 @@ class Ambilight(LightEntity):
         self._hs = None
         self._available = False
         self._effect = None
-        self._session = requests.Session()
-        self._session.mount('https://', HTTPAdapter(pool_connections=1, pool_maxsize=1, max_retries=3))
+        # self._session = requests.Session()
+        # self._session.mount('https://', HTTPAdapter(pool_connections=1, pool_maxsize=1, max_retries=3))
 
 
     @property
@@ -341,7 +341,7 @@ class Ambilight(LightEntity):
     #             return False
 
     def _getReq(self, path):
-        resp = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+        resp = requests.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
         if resp:
             self.on = True
             return json.loads(resp.text)
@@ -366,7 +366,7 @@ class Ambilight(LightEntity):
     #             return False
         
     def _postReq(self, path, data):
-        resp = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+        resp = requests.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
         if resp:
             self.on = True
             return True
