@@ -85,7 +85,7 @@ class Ambilight(LightEntity):
         self._available = False
         self._effect = None
         self._session = requests.Session()
-        self._session.mount('https://', HTTPAdapter(pool_connections=1))
+        self._session.mount('https://', HTTPAdapter(pool_connections=1, pool_maxsize=1, max_retries=3))
 
 
     @property
