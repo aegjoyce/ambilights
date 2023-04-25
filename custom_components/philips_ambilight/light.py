@@ -15,9 +15,9 @@ from requests.adapters import HTTPAdapter
 from datetime import timedelta
 
 logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.ERROR)
 requests_log = logging.getLogger("requests.packages.urllib3")
-requests_log.setLevel(logging.DEBUG)
+requests_log.setLevel(logging.ERROR)
 requests_log.propagate = True
 
 _LOGGER = logging.getLogger(__name__)
