@@ -163,9 +163,11 @@ class Ambilight(LightEntity):
             OLD_STATE = [self._hs[0], self._hs[1], self._brightness, self._effect]
         effect = self._effect
         if effect == EFFECT_MANUAL:
-            self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"STANDARD"})
+            if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
+                return False
             time.sleep(0.2)
-        self._postReq('ambilight/power', {'power':'Off'})
+        if not self._postReq('ambilight/power', {'power':'Off'}):
+            return False
         self._state = False
 		
     def getState(self):
