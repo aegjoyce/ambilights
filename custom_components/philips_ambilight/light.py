@@ -122,11 +122,6 @@ class Ambilight(LightEntity):
         return True
 
     def turn_on(self, **kwargs):
-        state = self._state
-        if state == False:
-            self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"})
-            time.sleep(0.2)
-
         if ATTR_HS_COLOR in kwargs:
             self._hs = kwargs[ATTR_HS_COLOR]
             convertedHue = int(self._hs[0]*(255/360))
@@ -142,10 +137,6 @@ class Ambilight(LightEntity):
             self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} )
 
         elif ATTR_EFFECT in kwargs:
-            effect = self._effect
-            if effect == EFFECT_MANUAL:
-                self._postReq('ambilight/power', {'power':'Off'})
-                time.sleep(0.2)
             effect = kwargs[ATTR_EFFECT]
             self.set_effect(effect)
 
@@ -170,6 +161,10 @@ class Ambilight(LightEntity):
                 self._effect = DEFAULT_EFFECT
             global OLD_STATE
             OLD_STATE = [self._hs[0], self._hs[1], self._brightness, self._effect]
+        effect = self._effect
+        if effect == EFFECT_MANUAL:
+            self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"STANDARD"})
+            time.sleep(0.2)
         self._postReq('ambilight/power', {'power':'Off'})
         self._state = False
 		
