@@ -55,7 +55,7 @@ DEFAULT_HUE = 360
 DEFAULT_SATURATION = 0
 DEFAULT_BRIGHTNESS = 255
 DEFAULT_EFFECT = EFFECT_MANUAL
-TIMEOUT = 0.5
+TIMEOUT = 1
 OLD_STATE = [DEFAULT_HUE, DEFAULT_SATURATION, DEFAULT_BRIGHTNESS, DEFAULT_EFFECT]
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -168,7 +168,7 @@ class Ambilight(LightEntity):
         if effect == EFFECT_MANUAL:
             if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
                 return False
-            time.sleep(1)
+            time.sleep(2)
         if not self._postReq('ambilight/power', {'power':'Off'}):
             return False
         self._state = False
