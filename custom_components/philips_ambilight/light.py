@@ -235,8 +235,12 @@ class Ambilight(LightEntity):
                         if not self._state:
                             self.turn_off
                         else:
-                            kwargs = {ATTR_EFFECT: self._effect, ATTR_BRIGHTNESS: self._brightness, ATTR_HS_COLOR: self._hs}
-                            self.turn_on(**kwargs)
+                            if self._effect != EFFECT_MANUAL:
+                                kwargs = {ATTR_EFFECT: self._effect}
+                                self.turn_on(**kwargs)
+                            else:
+                                kwargs = {ATTR_EFFECT: self._effect, ATTR_BRIGHTNESS: self._brightness, ATTR_HS_COLOR: self._hs}
+                                self.turn_on(**kwargs)
                         return False
                     else:
                         self._hs = (hue*(360/255),saturation*(100/255))
