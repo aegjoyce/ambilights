@@ -122,53 +122,79 @@ class Ambilight(LightEntity):
         return True
 
     def turn_on(self, **kwargs):
-        if ATTR_HS_COLOR in kwargs:
-            self._hs = kwargs[ATTR_HS_COLOR]
-            convertedHue = int(self._hs[0]*(255/360))
-            convertedSaturation = int(self._hs[1]*(255/100))
+        if ATTR_BRIGHTNESS in kwargs or ATTR_HS_COLOR in kwargs:
+            state = self._state
+            if state == False:
+                if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
+                    return False
+          
             if ATTR_BRIGHTNESS in kwargs:
-                convertedBrightness = kwargs[ATTR_BRIGHTNESS]
+                brightness = kwargs[ATTR_BRIGHTNESS]
+                convertedBrightness = int(brightness/2)
+            elif self._brightness:
+                convertedBrightness = int(self._brightness/2)
             else:
-                convertedBrightness = self._brightness
+                convertedBrightness = int(DEFAULT_BRIGHTNESS/2)
+            
+            if ATTR_HS_COLOR in kwargs:
+                hs = kwargs[ATTR_HS_COLOR]
+                convertedHue = int(hs[0]*(255/360))
+                convertedSaturation = int(hs[1]*(255/100))
+            elif self._hs:
+                convertedHue = int(self._hs[0]*(255/360))
+                convertedSaturation = int(self._hs[1]*(255/100))
+            else:
+                convertedHue = DEFAULT_HUE
+                convertedSaturation = DEFAULT_SATURATION
+            
             if not self._postReq('ambilight/lounge',{"color":{"hue":convertedHue,"saturation":convertedSaturation,"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} ):
                 return False
-
-        elif ATTR_BRIGHTNESS in kwargs:
-            convertedBrightness = kwargs[ATTR_BRIGHTNESS]
-            if not self._postReq('ambilight/lounge',{"color":{"hue":int(self._hs[0]*(255/360)),"saturation":int(self._hs[1]*(255/100)),"brightness":convertedBrightness},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} ):
-                return False
-
+            
+            if ATTR_BRIGHTNESS in kwargs:
+                self._brightness = kwargs[ATTR_BRIGHTNESS]
+            if ATTR_HS_COLOR in kwargs:
+                self._hs = kwargs[ATTR_HS_COLOR]
+        
         elif ATTR_EFFECT in kwargs:
             effect = kwargs[ATTR_EFFECT]
+            if effect == EFFECT_MANUAL:
+                state = self._state
+                if state == False:
+                    if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
+                        return False
+            else:
+                if not self._postReq('ambilight/power', {'power':'Off'}):
+                    return False
             self.set_effect(effect)
-
+        
         else:
             if OLD_STATE[3] == EFFECT_MANUAL:
-                if not self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":OLD_STATE[2]},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} ):
-                    return False
+                state = self._state
+                if state == False:
+                    if self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
+                        if not self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":int(OLD_STATE[2]/2)},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} ):
+                            return False
             else: 
                 effect = self._effect
                 self.set_effect(effect)
 
     def turn_off(self, **kwargs):
         state = self._state
+        hs = self._hs
+        brightness = self._brightness
+        effect = self._effect
         if state == True:
-            hs = self._hs
             if hs == None:
                 self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
-            brightness = self._brightness
             if brightness == None:
                 self._brightness = DEFAULT_BRIGHTNESS
-            effect = self._effect
             if effect == None:
                 self._effect = DEFAULT_EFFECT
             global OLD_STATE
             OLD_STATE = [self._hs[0], self._hs[1], self._brightness, self._effect]
-        effect = self._effect
         if effect == EFFECT_MANUAL:
             if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
                 return False
-            time.sleep(2)
         if not self._postReq('ambilight/power', {'power':'Off'}):
             return False
         self._state = False
@@ -205,9 +231,17 @@ class Ambilight(LightEntity):
                     hue = fullState['colorSettings']['color']['hue']
                     saturation = fullState['colorSettings']['color']['saturation']
                     bright = fullState['colorSettings']['color']['brightness']
-                    self._hs = (hue*(360/255),saturation*(100/255))
-                    self._brightness = bright
-                    self._effect = EFFECT_MANUAL
+                    if (hue + saturation + bright) == 0:
+                        if not self._state:
+                            self.turn_off
+                        else:
+                            kwargs = {ATTR_EFFECT: self._effect, ATTR_BRIGHTNESS: self._brightness, ATTR_HS_COLOR: self._hs}
+                            self.turn_on(**kwargs)
+                        return False
+                    else:
+                        self._hs = (hue*(360/255),saturation*(100/255))
+                        self._brightness = bright*2
+                        self._effect = EFFECT_MANUAL
                 
                 else:
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
@@ -332,29 +366,25 @@ class Ambilight(LightEntity):
         self._effect = effect
                 
     def _getReq(self, path):
-        success = False
-        attempts = 0
-        while attempts < 3 and not success:
+        for _ in range(3):
             try:
-                resp = requests.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-                self.on = True
-                success = True
-                return json.loads(resp.text)
-            except Exception as err:
-                attempts += 1
+                response = requests.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+                if response.ok:
+                    self.on = True
+                    return json.loads(response.text)
+            except requests.exceptions.RequestException as e:
                 self.on = False
-                return False
+                time.sleep(1)
+        return False
 
     def _postReq(self, path, data):
-        success = False
-        attempts = 0
-        while attempts < 3 and not success:
+        for _ in range(3):
             try:
-                resp = requests.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
-                self.on = True
-                success = True
-                return True
-            except Exception as err:
-                attempts += 1
+                response = requests.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+                if response.ok:
+                    self.on = True
+                    return True
+            except requests.exceptions.RequestException as e:
                 self.on = False
-                return False
+                time.sleep(1)
+        return False
