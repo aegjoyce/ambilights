@@ -204,16 +204,13 @@ class Ambilight(LightEntity):
         if fullState:
             self._available = True
             styleName = fullState['styleName']
-            
-            if styleName == "OFF":
-                self._state = False
 
-            elif styleName == "Lounge light":
-                self._state = True
+            if styleName == "Lounge light":
                 isExpert = fullState['isExpert']
                 
                 if isExpert == False:
                     effectName = fullState['menuSetting']
+                    self._state = True
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
                     if effectName == "HOT_LAVA":
@@ -233,7 +230,10 @@ class Ambilight(LightEntity):
                     bright = fullState['colorSettings']['color']['brightness']
                     if (hue + saturation + bright) == 0:
                         if not self._state:
-                            self.turn_off
+                            if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
+                                return False
+                            if not self._postReq('ambilight/power', {'power':'Off'}):
+                                return False
                         else:
                             if self._effect != EFFECT_MANUAL:
                                 kwargs = {ATTR_EFFECT: self._effect}
@@ -241,13 +241,15 @@ class Ambilight(LightEntity):
                             else:
                                 kwargs = {ATTR_EFFECT: self._effect, ATTR_BRIGHTNESS: self._brightness, ATTR_HS_COLOR: self._hs}
                                 self.turn_on(**kwargs)
-                        return False
+                            return False
                     else:
+                        self._state = True
                         self._hs = (hue*(360/255),saturation*(100/255))
                         self._brightness = bright*2
                         self._effect = EFFECT_MANUAL
                 
                 else:
+                    self._state = True
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
 
@@ -292,6 +294,9 @@ class Ambilight(LightEntity):
                     self._effect = EFFECT_FA_RHYTHM
                 elif effectName == "MODE_RANDOM":
                     self._effect = EFFECT_FA_RANDOM
+            
+            elif styleName == "OFF":
+                self._state = False
 
         else:
             self._available = False
@@ -370,7 +375,7 @@ class Ambilight(LightEntity):
         self._effect = effect
                 
     def _getReq(self, path):
-        for _ in range(3):
+        for _ in range(5):
             try:
                 response = requests.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 if response.ok:
@@ -382,7 +387,7 @@ class Ambilight(LightEntity):
         return False
 
     def _postReq(self, path, data):
-        for _ in range(3):
+        for _ in range(5):
             try:
                 response = requests.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 if response.ok:
