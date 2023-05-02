@@ -392,6 +392,7 @@ class Ambilight(LightEntity):
                 response = requests.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 if response.ok:
                     self.on = True
+                    time.sleep(0.5)
                     return True
             except requests.exceptions.RequestException as e:
                 self.on = False
