@@ -2,11 +2,13 @@
 
 import json
 import string
-import requests
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 import logging
 import time
+import requests
+import urllib3
+urllib3.disable_warnings()
 
 from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, ATTR_EFFECT, SUPPORT_EFFECT)
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSWORD)
@@ -84,6 +86,9 @@ class Ambilight(LightEntity):
         self._hs = None
         self._available = False
         self._effect = None
+        self._session = requests.Session()
+        self._session.mount('https://', HTTPAdapter(pool_connections=1))
+
 
     @property
     def name(self):
@@ -130,11 +135,11 @@ class Ambilight(LightEntity):
           
             if ATTR_BRIGHTNESS in kwargs:
                 brightness = kwargs[ATTR_BRIGHTNESS]
-                convertedBrightness = int(brightness/2)
+                convertedBrightness = int(brightness)
             elif self._brightness:
-                convertedBrightness = int(self._brightness/2)
+                convertedBrightness = int(self._brightness)
             else:
-                convertedBrightness = int(DEFAULT_BRIGHTNESS/2)
+                convertedBrightness = int(DEFAULT_BRIGHTNESS)
             
             if ATTR_HS_COLOR in kwargs:
                 hs = kwargs[ATTR_HS_COLOR]
@@ -172,7 +177,7 @@ class Ambilight(LightEntity):
                 state = self._state
                 if state == False:
                     if self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
-                        if not self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":int(OLD_STATE[2]/2)},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} ):
+                        if not self._postReq('ambilight/lounge',{"color":{"hue":int(OLD_STATE[0]*(255/360)),"saturation":int(OLD_STATE[1]*(255/100)),"brightness":int(OLD_STATE[2])},"colordelta":{"hue":0,"saturation":0,"brightness":0},"speed":0} ):
                             return False
             else: 
                 effect = self._effect
@@ -237,15 +242,19 @@ class Ambilight(LightEntity):
                         else:
                             if self._effect != EFFECT_MANUAL:
                                 kwargs = {ATTR_EFFECT: self._effect}
+                                if not self._postReq('ambilight/power', {'power':'Off'}):
+                                    return False
                                 self.turn_on(**kwargs)
                             else:
                                 kwargs = {ATTR_EFFECT: self._effect, ATTR_BRIGHTNESS: self._brightness, ATTR_HS_COLOR: self._hs}
+                                if not self._postReq('ambilight/power', {'power':'Off'}):
+                                    return False
                                 self.turn_on(**kwargs)
                             return False
                     else:
                         self._state = True
                         self._hs = (hue*(360/255),saturation*(100/255))
-                        self._brightness = bright*2
+                        self._brightness = bright
                         self._effect = EFFECT_MANUAL
                 
                 else:
@@ -377,9 +386,10 @@ class Ambilight(LightEntity):
     def _getReq(self, path):
         for _ in range(5):
             try:
-                response = requests.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+                response = self._session.get(BASE_URL.format(self._host, path), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 if response.ok:
                     self.on = True
+                    time.sleep(0.5)
                     return json.loads(response.text)
             except requests.exceptions.RequestException as e:
                 self.on = False
@@ -389,7 +399,7 @@ class Ambilight(LightEntity):
     def _postReq(self, path, data):
         for _ in range(5):
             try:
-                response = requests.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
+                response = self._session.post(BASE_URL.format(self._host, path), data=json.dumps(data), verify=False, auth=HTTPDigestAuth(self._user, self._password), timeout=TIMEOUT)
                 if response.ok:
                     self.on = True
                     time.sleep(0.5)
