@@ -84,8 +84,8 @@ class Ambilight(LightEntity):
         self._state = None
         self._brightness = None
         self._hs = None
-        self._attr_supported_color_modes = {ColorMode.HS, ColorMode.ONOFF}
-        self._attr_color_mode = ColorMode.UNKNOWN
+        self._attr_supported_color_modes = {ColorMode.HS}
+        self._attr_color_mode = ColorMode.ONOFF
         self._attr_supported_features = LightEntityFeature.EFFECT
         self._available = False
         self._effect = None
