@@ -10,7 +10,7 @@ import requests
 import urllib3
 urllib3.disable_warnings()
 
-from homeassistant.components.light import (ATTR_BRIGHTNESS, LightEntity, PLATFORM_SCHEMA, ATTR_HS_COLOR, SUPPORT_BRIGHTNESS, SUPPORT_COLOR, ATTR_EFFECT, SUPPORT_EFFECT)
+from homeassistant.components.light import (ATTR_BRIGHTNESS, ATTR_EFFECT, ATTR_HS_COLOR, PLATFORM_SCHEMA, ColorMode, LightEntity, LightEntityFeature)
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_USERNAME, CONF_PASSWORD)
 from requests.auth import HTTPDigestAuth
 from requests.adapters import HTTPAdapter
@@ -84,6 +84,9 @@ class Ambilight(LightEntity):
         self._state = None
         self._brightness = None
         self._hs = None
+        self._attr_supported_color_modes = {ColorMode.HS, ColorMode.ONOFF}
+        self._attr_color_mode = ColorMode.UNKNOWN
+        self._attr_supported_features = LightEntityFeature.EFFECT
         self._available = False
         self._effect = None
         self._session = requests.Session()
@@ -103,12 +106,12 @@ class Ambilight(LightEntity):
         return self._available
 
     @property
-    def supported_features(self):
-        return SUPPORT_BRIGHTNESS | SUPPORT_COLOR | SUPPORT_EFFECT
-
-    @property
     def effect_list(self):
         return AMBILIGHT_EFFECT_LIST
+
+    @property
+    def effect(self):
+        return self._effect
 
     @property
     def brightness(self):
@@ -119,20 +122,17 @@ class Ambilight(LightEntity):
         return self._hs
 
     @property
-    def effect(self):
-        return self._effect
-
-    @property
     def should_poll(self):
         return True
 
     def turn_on(self, **kwargs):
         if ATTR_BRIGHTNESS in kwargs or ATTR_HS_COLOR in kwargs:
+            self._attr_color_mode = ColorMode.HS
             state = self._state
             if state == False:
                 if not self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
                     return False
-          
+            
             if ATTR_BRIGHTNESS in kwargs:
                 brightness = kwargs[ATTR_BRIGHTNESS]
                 convertedBrightness = int(brightness)
@@ -174,6 +174,7 @@ class Ambilight(LightEntity):
         
         else:
             if OLD_STATE[3] == EFFECT_MANUAL:
+                self._attr_color_mode = ColorMode.HS
                 state = self._state
                 if state == False:
                     if self._postReq('ambilight/currentconfiguration', {"styleName":"FOLLOW_VIDEO","isExpert":False,"menuSetting":"NATURAL"}):
@@ -216,6 +217,7 @@ class Ambilight(LightEntity):
                 if isExpert == False:
                     effectName = fullState['menuSetting']
                     self._state = True
+                    self._attr_color_mode = ColorMode.ONOFF
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
                     if effectName == "HOT_LAVA":
@@ -253,17 +255,20 @@ class Ambilight(LightEntity):
                             return False
                     else:
                         self._state = True
+                        self._attr_color_mode = ColorMode.HS
                         self._hs = (hue*(360/255),saturation*(100/255))
                         self._brightness = bright
                         self._effect = EFFECT_MANUAL
                 
                 else:
                     self._state = True
+                    self._attr_color_mode = ColorMode.HS
                     self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                     self._brightness = DEFAULT_BRIGHTNESS
 
             elif styleName == 'FOLLOW_VIDEO':
                 self._state = True
+                self._attr_color_mode = ColorMode.ONOFF
                 self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                 self._brightness = DEFAULT_BRIGHTNESS
                 effectName = fullState['menuSetting']
@@ -284,6 +289,7 @@ class Ambilight(LightEntity):
                 
             elif styleName == 'FOLLOW_AUDIO':
                 self._state = True
+                self._attr_color_mode = ColorMode.ONOFF
                 self._hs = (DEFAULT_HUE, DEFAULT_SATURATION)
                 self._brightness = DEFAULT_BRIGHTNESS
                 effectName = fullState['menuSetting']
